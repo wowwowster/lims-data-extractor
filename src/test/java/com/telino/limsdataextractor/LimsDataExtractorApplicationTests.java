@@ -25,13 +25,11 @@ public class LimsDataExtractorApplicationTests {
 
 	private ImportApiExterne importWsExterne;
 
-	@Autowired
-	private LIMSWebService webService;
+/*	@Autowired
+	private LIMSWebService webService;  */
 
 	@Autowired
 	private LIMSImporter importer;
-
-	static Long compteur = new Long(1);
 
 	@Test
 	public void testImportPagination() throws ParseException {
