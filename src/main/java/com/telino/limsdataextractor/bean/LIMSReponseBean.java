@@ -14,15 +14,10 @@ public class LIMSReponseBean {
     }
 
     private Link next;
-
     private List<LIMSAnalyseBean> analyses =  new ArrayList<>();
 
-    public List<LIMSAnalyseBean> getAnalyses() {
-        return analyses;
-    }
-
-    public void setAnalyses(List<LIMSAnalyseBean> analyses) {
-        this.analyses = analyses;
+    public boolean hasNext() {
+        return analyses.isEmpty() == false && getNextUrl() != null;
     }
 
     @JsonIgnore
@@ -32,7 +27,20 @@ public class LIMSReponseBean {
                 : null;
     }
 
-    public boolean hasNext() {
-        return analyses.isEmpty() == false && getNextUrl() != null;
+    public Link getNext() {
+        return next;
+    }
+
+    public void setNext(Link next) {
+        this.next = next;
+    }
+
+    @JsonProperty("items")
+    public List<LIMSAnalyseBean> getAnalyses() {
+        return analyses;
+    }
+
+    public void setAnalyses(List<LIMSAnalyseBean> analyses) {
+        this.analyses = analyses;
     }
 }

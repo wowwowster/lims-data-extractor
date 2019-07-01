@@ -150,6 +150,8 @@ public class LIMSWebService {
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
             HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
             ResponseEntity<LIMSReponseBean> result = restTemplate.exchange(uriBuilder.build(), HttpMethod.GET, entity, LIMSReponseBean.class);
+
+
             return result.getBody();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
