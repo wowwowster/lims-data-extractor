@@ -26,4 +26,6 @@ public interface Const {
     String WS_LIMS_TRIGGER_PREFIX = "TriggerApiExterne_";
     //String LIMS_MINIMAL_LAST_RUN_DATE = "2018/06/20 00:00:00.000";
 
+    static Long compteur = new Long(1);
+
 }

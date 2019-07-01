@@ -1,29 +1,25 @@
 package com.telino.limsdataextractor.service;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.telino.limsdataextractor.bean.LIMSReponseBean;
 import com.telino.limsdataextractor.constante.Const;
 import com.telino.limsdataextractor.exception.ApplicationException;
 import com.telino.limsdataextractor.fakemodel.apiexterne.ImportApiExterne;
 import com.telino.limsdataextractor.fakemodel.apiexterne.ParametreApiExterne;
+import com.telino.limsdataextractor.utils.LimsFileUtils;
 import com.telino.limsdataextractor.utils.RestTemplateUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -121,6 +117,19 @@ public class LIMSWebService {
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
             HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
             ResponseEntity<LIMSReponseBean> result = restTemplate.exchange(uriBuilder.build(), HttpMethod.GET, entity, LIMSReponseBean.class);
+
+            File outputFolder = new File("output");
+            LimsFileUtils.cleanFolder(outputFolder);
+            HttpEntity<String> entityBis = new HttpEntity<String>("parameters", headers);
+            ResponseEntity<byte[]> response = restTemplate.exchange(
+                    uriBuilder.build(),
+                    HttpMethod.GET, entityBis, byte[].class);
+
+            Long increment = Const.compteur + 1;
+            if (response.getStatusCode() == HttpStatus.OK) {
+                Files.write(Paths.get("output/lims-entites-"+entites+" - "+ increment +".json"), response.getBody());
+            }
+
             logger.debug("Fin d'exécution de la méthode getPage");
             return result.getBody();
         } catch (URISyntaxException e) {
