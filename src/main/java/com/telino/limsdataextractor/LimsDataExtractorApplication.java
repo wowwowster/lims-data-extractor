@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -37,6 +38,8 @@ public class LimsDataExtractorApplication {
 	private static final Logger logger = LoggerFactory.getLogger(LimsDataExtractorApplication.class);
 
 	public static void main(String[] args) throws ParseException {
+		/*File logsFolder = new File("logs");
+		logsFolder.mkdir(); */
 		logger.info("Début extraction");
 		SpringApplication.run(LimsDataExtractorApplication.class, args);
 		System.out.println("jourDeBut avant argumentation="+limsWsForTest.getJourDeBut());
