@@ -40,6 +40,12 @@ public class LIMSWebService {
     @Value("${lims.url}")
     private String url;
 
+    @Value("${lims.jourDeBut}")
+    private String jourDeBut;
+
+    @Value("${lims.jourFin}")
+    private String jourFin;
+
     static int compteur;
 
     public String getUsername() {
@@ -64,6 +70,22 @@ public class LIMSWebService {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getJourDeBut() {
+        return jourDeBut;
+    }
+
+    public void setJourDeBut(String jourDeBut) {
+        this.jourDeBut = jourDeBut;
+    }
+
+    public String getJourFin() {
+        return jourFin;
+    }
+
+    public void setJourFin(String jourFin) {
+        this.jourFin = jourFin;
     }
 
     private Logger logger = LogManager.getLogger(LIMSWebService.class);

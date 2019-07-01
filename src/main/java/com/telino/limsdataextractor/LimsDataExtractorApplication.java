@@ -4,7 +4,10 @@ import com.telino.limsdataextractor.fakemodel.apiexterne.ImportApiExterne;
 import com.telino.limsdataextractor.fakemodel.apiexterne.ParametreApiExterne;
 import com.telino.limsdataextractor.importt.LIMSImporter;
 import com.telino.limsdataextractor.service.LIMSWebService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -19,6 +22,8 @@ public class LimsDataExtractorApplication {
 	private static LIMSWebService limsWsForTest;
 	private static LIMSImporter importer;
 
+
+
 	@Autowired
 	public void setLIMSWebService(LIMSWebService limsWs){
 		LimsDataExtractorApplication.limsWsForTest = limsWs;
@@ -29,8 +34,15 @@ public class LimsDataExtractorApplication {
 		this.importer = importer;
 	}
 
+	private static final Logger logger = LoggerFactory.getLogger(LimsDataExtractorApplication.class);
+
 	public static void main(String[] args) throws ParseException {
+		logger.info("Début extraction");
 		SpringApplication.run(LimsDataExtractorApplication.class, args);
+		System.out.println("jourDeBut avant argumentation="+limsWsForTest.getJourDeBut());
+		logger.info("jourDeBut avant argumentation="+limsWsForTest.getJourDeBut());
+		limsWsForTest.setJourDeBut(args.length > 0 ? args[0]:limsWsForTest.getJourDeBut());
+		logger.info("jourDeBut="+limsWsForTest.getJourDeBut());
 		limsWsForTest.printUsername();
 
 		ImportApiExterne importWsExterne = new ImportApiExterne();
@@ -42,6 +54,8 @@ public class LimsDataExtractorApplication {
 		Date dateFin = df.parse("2017/04/05 17:00:00.000");
 		importWsExterne.setLastFinishedAt(dateLastFinishedAt);
 		importer.doImport(importWsExterne, dateFin);
+		logger.info("Fin extraction");
+
 	}
 
 }
