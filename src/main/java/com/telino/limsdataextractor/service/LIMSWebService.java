@@ -126,6 +126,7 @@ public class LIMSWebService {
             ResponseEntity<LIMSReponseBean> result = restTemplate.exchange(uriBuilder.build(), HttpMethod.GET, entity, LIMSReponseBean.class);
 
             File outputFolder = new File("output");
+            outputFolder.mkdir();
             LimsFileUtils.cleanFolder(outputFolder);
             HttpEntity<String> entityBis = new HttpEntity<String>("parameters", headers);
             ResponseEntity<byte[]> response = restTemplate.exchange(
