@@ -31,6 +31,8 @@ public class LimsDataExtractorApplicationTests {
 	@Autowired
 	private LIMSImporter importer;
 
+	static Long compteur = new Long(1);
+
 	@Test
 	public void testImportPagination() throws ParseException {
 		//importer.setLimsWS(webService);
@@ -40,7 +42,7 @@ public class LimsDataExtractorApplicationTests {
 		importWsExterne.addOrUpdateParametre(new ParametreApiExterne("ALL"));
 		DateFormat df = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss.SSS");
 		Date dateLastFinishedAt = df.parse("2017/03/01 04:00:00.000");
-		Date dateFin = df.parse("2017/05/02 17:00:00.000");
+		Date dateFin = df.parse("2017/04/15 17:00:00.000");
 		importWsExterne.setLastFinishedAt(dateLastFinishedAt);
 		importer.doImport(importWsExterne, dateFin);
 	}

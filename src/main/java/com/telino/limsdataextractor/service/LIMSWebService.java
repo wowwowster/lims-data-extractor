@@ -7,7 +7,9 @@ import com.telino.limsdataextractor.fakemodel.apiexterne.ImportApiExterne;
 import com.telino.limsdataextractor.fakemodel.apiexterne.ParametreApiExterne;
 import com.telino.limsdataextractor.utils.LimsFileUtils;
 import com.telino.limsdataextractor.utils.RestTemplateUtils;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,7 +19,10 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
@@ -34,6 +39,8 @@ public class LIMSWebService {
 
     @Value("${lims.url}")
     private String url;
+
+    static int compteur;
 
     public String getUsername() {
         return username;
@@ -125,9 +132,9 @@ public class LIMSWebService {
                     uriBuilder.build(),
                     HttpMethod.GET, entityBis, byte[].class);
 
-            Long increment = Const.compteur + 1;
+            compteur = compteur + 1;
             if (response.getStatusCode() == HttpStatus.OK) {
-                Files.write(Paths.get("output/lims-entites-"+entites+" - "+ increment +".json"), response.getBody());
+                Files.write(Paths.get("output/lims-entites-"+entites+" - "+  compteur +".json"), response.getBody());
             }
 
             logger.debug("Fin d'exécution de la méthode getPage");
@@ -151,10 +158,31 @@ public class LIMSWebService {
             HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
             ResponseEntity<LIMSReponseBean> result = restTemplate.exchange(uriBuilder.build(), HttpMethod.GET, entity, LIMSReponseBean.class);
 
+            HttpEntity<String> entityBis = new HttpEntity<String>("parameters", headers);
+            ResponseEntity<byte[]> response = restTemplate.exchange(
+                    uriBuilder.build(),
+                    HttpMethod.GET, entityBis, byte[].class);
+
+
+            compteur = compteur + 1;
+
+            List<NameValuePair> params = URLEncodedUtils.parse(uriBuilder.build(), Charset.forName("UTF-8"));
+            String entites="";
+            for (NameValuePair param : params) {
+                if (param.getName().equalsIgnoreCase("entities")) {
+                 entites = param.getValue();
+                };
+            }
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                Files.write(Paths.get("output/lims-entites-"+entites+" - "+  compteur +".json"), response.getBody());
+            }
 
             return result.getBody();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
+        } catch (Exception ex) {
+            throw new ApplicationException(ex);
         }
     }
 
