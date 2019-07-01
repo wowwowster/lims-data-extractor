@@ -1,6 +1,6 @@
-package com.claurier.limsdataextractor;
+package com.telino.limsdataextractor;
 
-import com.claurier.limsdataextractor.service.LIMSWebService;
+import com.telino.limsdataextractor.service.LIMSWebService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
