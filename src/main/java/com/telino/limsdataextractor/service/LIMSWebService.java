@@ -47,6 +47,7 @@ public class LIMSWebService {
     private String jourFin;
 
     static int compteur;
+    static String pathJson = "";
 
     public String getUsername() {
         return username;
@@ -108,10 +109,10 @@ public class LIMSWebService {
                 ? parametre.getValeur()
                 : null;
         logger.debug("Username LIMS:"+username);
-        return getPage(url, username, password, entites, dateDebut, dateFin);
+        return getFirstPage(url, username, password, entites, dateDebut, dateFin);
     }
 
-    public LIMSReponseBean  getPage(String url, String user, String password, String entites, Date dateDebut, Date dateFin) {
+    public LIMSReponseBean  getFirstPage(String url, String user, String password, String entites, Date dateDebut, Date dateFin) {
         logger.debug("Début d'exécution de la méthode getPage");
         try {
             URIBuilder uriBuilder = new URIBuilder(url);
@@ -127,28 +128,22 @@ public class LIMSWebService {
                 uriBuilder.addParameter("end-date", dateFormat.format(dateFin));
             }
             RestTemplate restTemplate = new RestTemplate();
-
-          /*  ObjectMapper objectMapper = new ObjectMapper();
-           // objectMapper.registerModule(new JodaModule());
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            objectMapper.setTimeZone(TimeZone.getTimeZone("GMT+1:00"));
-            objectMapper.setDateFormat(new ISO8601DateFormat());
-            objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
-            objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-            List<HttpMessageConverter<?>> messageConverters = new ArrayList<>();
-            MappingJackson2HttpMessageConverter jsonMessageConverter = new MappingJackson2HttpMessageConverter();
-            jsonMessageConverter.setObjectMapper(objectMapper);
-            messageConverters.add(jsonMessageConverter);
-            restTemplate.setMessageConverters(messageConverters);  */
-
-
             HttpHeaders headers = RestTemplateUtils.addBasicAuth(new HttpHeaders(), user, password);
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
             HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
             ResponseEntity<LIMSReponseBean> result = restTemplate.exchange(uriBuilder.build(), HttpMethod.GET, entity, LIMSReponseBean.class);
-
-            File outputFolder = new File("output");
-            outputFolder.mkdir();
+            pathJson = "output/";
+            File outputFolder = new File(pathJson);
+            if (!outputFolder.mkdir()) {
+                logger.fatal("création du répertoire "+outputFolder+"impossible");
+                throw new ApplicationException("création du répertoire "+outputFolder+"impossible");
+            }
+            pathJson = "output/"+entites;
+            outputFolder = new File(pathJson);
+            if (!outputFolder.mkdir()) {
+                logger.fatal("création du répertoire "+outputFolder+"impossible");
+                throw new ApplicationException("création du répertoire "+outputFolder+"impossible");
+            }
             LimsFileUtils.cleanFolder(outputFolder);
             HttpEntity<String> entityBis = new HttpEntity<String>("parameters", headers);
             ResponseEntity<byte[]> response = restTemplate.exchange(
@@ -158,18 +153,17 @@ public class LIMSWebService {
             compteur = compteur + 1;
             String nomFichier="";
             if (response.getStatusCode() == HttpStatus.OK) {
-                nomFichier="output/lims-entites-"+entites+" - "+  compteur +".json";
+                nomFichier=outputFolder+"/lims-entites-"+entites+"-"+  compteur +".json";
                 Files.write(Paths.get(nomFichier), response.getBody());
             }
             logger.info("Fichier créé : " + nomFichier);
             logger.debug("Fin d'exécution de la méthode getPage");
             return result.getBody();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-
         } catch (HttpClientErrorException ex) {
+            logger.fatal("Le service LIMS n'est pas disponible",ex);
             throw new ApplicationException("Le service LIMS n'est pas disponible.");
         } catch (Exception ex) {
+            logger.fatal(ex);
             throw new ApplicationException(ex);
         }
     }
@@ -200,14 +194,13 @@ public class LIMSWebService {
             }
             String nomFichier="";
             if (response.getStatusCode() == HttpStatus.OK) {
-                nomFichier="output/lims-entites-"+entites+" - "+  compteur +".json";
+                nomFichier=pathJson+"/lims-entites-"+entites+" - "+  compteur +".json";
                 Files.write(Paths.get(nomFichier), response.getBody());
             }
             logger.info("Fichier créé : " + nomFichier);
             return result.getBody();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
         } catch (Exception ex) {
+            logger.fatal(ex);
             throw new ApplicationException(ex);
         }
     }
