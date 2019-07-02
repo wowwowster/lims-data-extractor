@@ -11,34 +11,19 @@
     <groupId>com.telino</groupId>
     <artifactId>lims-data-extractor</artifactId>
     <version>staging-environment</version>
-       <packaging>jar</packaging>
-       <name>lims-data-extractor</name>
-       <description></description>
+    <packaging>jar</packaging>
+    <name>lims-data-extractor</name>
+    <description></description>
 
-       <properties>
-           <java.version>1.8</java.version>
-       </properties>
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
 
-       <dependencies>
-           <!--		<dependency>
-                       <groupId>org.springframework.boot</groupId>
-                       <artifactId>spring-boot-starter-data-jpa</artifactId>
-                   </dependency>-->
+    <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-<!--        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-tomcat</artifactId>
-        </dependency>-->
-
-<!--        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <scope>runtime</scope>
-            <optional>true</optional>
-        </dependency>-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -54,7 +39,11 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-joda</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>24.0-jre</version>
+        </dependency>
     </dependencies>
 
     <build>

@@ -1,5 +1,7 @@
 package com.telino.limsdataextractor.service;
 
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
 import com.telino.limsdataextractor.bean.LIMSReponseBean;
 import com.telino.limsdataextractor.constante.Const;
 import com.telino.limsdataextractor.exception.ApplicationException;
@@ -19,14 +21,13 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service("LIMSWebService")
 public class LIMSWebService {
@@ -47,7 +48,9 @@ public class LIMSWebService {
     private String jourFin;
 
     static int compteur;
-    static String pathJson = "";
+    String pathJson = "";
+    String startDateParameter;
+    String endDateParameter;
 
     public String getUsername() {
         return username;
@@ -93,13 +96,12 @@ public class LIMSWebService {
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
 
-    public void printUsername()
-    {
+    public void printUsername() {
         System.out.println(username);
     }
 
     public LIMSReponseBean getPage(ImportApiExterne importExterne, Date dateDebut, Date dateFin) {
-        if (null==importExterne.getParametres()){
+        if (null == importExterne.getParametres()) {
             throw new ApplicationException("L'appel LIMS n'a pas de paramètres en entrée");
         }
 
@@ -108,11 +110,11 @@ public class LIMSWebService {
         String entites = parametre != null
                 ? parametre.getValeur()
                 : null;
-        logger.debug("Username LIMS:"+username);
+        logger.debug("Username LIMS:" + username);
         return getFirstPage(url, username, password, entites, dateDebut, dateFin);
     }
 
-    public LIMSReponseBean  getFirstPage(String url, String user, String password, String entites, Date dateDebut, Date dateFin) {
+    public LIMSReponseBean getFirstPage(String url, String user, String password, String entites, Date dateDebut, Date dateFin) {
         logger.debug("Début d'exécution de la méthode getPage");
         try {
             URIBuilder uriBuilder = new URIBuilder(url);
@@ -121,46 +123,63 @@ public class LIMSWebService {
             } else {
                 uriBuilder.addParameter("entities", "ALL");
             }
-            String startDateParameter = dateDebut == null ? "ALL" : dateFormat.format(dateDebut);
+            startDateParameter = dateDebut == null ? "ALL" : dateFormat.format(dateDebut);
             uriBuilder.addParameter("start-date", startDateParameter);
-
-            if (dateFin != null) {
-                uriBuilder.addParameter("end-date", dateFormat.format(dateFin));
-            }
+            endDateParameter = dateFin == null ? "ALL" : dateFormat.format(dateFin);
+            uriBuilder.addParameter("end-date", dateFormat.format(dateFin));
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = RestTemplateUtils.addBasicAuth(new HttpHeaders(), user, password);
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
             HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
             ResponseEntity<LIMSReponseBean> result = restTemplate.exchange(uriBuilder.build(), HttpMethod.GET, entity, LIMSReponseBean.class);
-            pathJson = "output/";
+            pathJson = "output";
             File outputFolder = new File(pathJson);
-            if (!outputFolder.mkdir()) {
-                logger.fatal("création du répertoire "+outputFolder+"impossible");
-                throw new ApplicationException("création du répertoire "+outputFolder+"impossible");
+            if (!outputFolder.exists()) {
+                if (!outputFolder.mkdir()) {
+                    logger.fatal("création du répertoire " + outputFolder + "impossible");
+                    throw new ApplicationException("création du répertoire " + outputFolder + "impossible");
+                }
             }
-            pathJson = "output/"+entites;
+
+            List<String> listStartDateParameter = Lists.newArrayList(Splitter.on("-").split(startDateParameter));
+            listStartDateParameter = listStartDateParameter.subList(0,3);
+            Lists.reverse(listStartDateParameter);
+            startDateParameter= listStartDateParameter.stream().collect(Collectors.joining(""));
+
+            List<String> listEndDateParameter = Lists.newArrayList(Splitter.on("-").split(endDateParameter));
+            listEndDateParameter = listEndDateParameter.subList(0,3);
+            Lists.reverse(listEndDateParameter);
+            endDateParameter= listEndDateParameter.stream().collect(Collectors.joining(""));
+
+
+            pathJson = "output/" + entites + "-" + startDateParameter + "-" + endDateParameter;
             outputFolder = new File(pathJson);
-            if (!outputFolder.mkdir()) {
-                logger.fatal("création du répertoire "+outputFolder+"impossible");
-                throw new ApplicationException("création du répertoire "+outputFolder+"impossible");
+            if (!outputFolder.exists()) {
+                if (!outputFolder.mkdir()) {
+                    logger.fatal("création du répertoire " + outputFolder + "impossible");
+                    throw new ApplicationException("création du répertoire " + outputFolder + "impossible");
+                }
+            } else {
+                LimsFileUtils.cleanFolder(outputFolder);
+
             }
-            LimsFileUtils.cleanFolder(outputFolder);
             HttpEntity<String> entityBis = new HttpEntity<String>("parameters", headers);
             ResponseEntity<byte[]> response = restTemplate.exchange(
                     uriBuilder.build(),
                     HttpMethod.GET, entityBis, byte[].class);
             logger.info("Appel WS : " + uriBuilder.build());
             compteur = compteur + 1;
-            String nomFichier="";
+
+            String nomFichier = "";
             if (response.getStatusCode() == HttpStatus.OK) {
-                nomFichier=outputFolder+"/lims-entites-"+entites+"-"+  compteur +".json";
+               nomFichier = outputFolder + "/lims-entites-" + entites + "-" + startDateParameter+ "-" + endDateParameter + "-" + compteur + ".json";
                 Files.write(Paths.get(nomFichier), response.getBody());
             }
             logger.info("Fichier créé : " + nomFichier);
             logger.debug("Fin d'exécution de la méthode getPage");
             return result.getBody();
         } catch (HttpClientErrorException ex) {
-            logger.fatal("Le service LIMS n'est pas disponible",ex);
+            logger.fatal("Le service LIMS n'est pas disponible", ex);
             throw new ApplicationException("Le service LIMS n'est pas disponible.");
         } catch (Exception ex) {
             logger.fatal(ex);
@@ -186,15 +205,16 @@ public class LIMSWebService {
             compteur = compteur + 1;
 
             List<NameValuePair> params = URLEncodedUtils.parse(uriBuilder.build(), Charset.forName("UTF-8"));
-            String entites="";
+            String entites = "";
             for (NameValuePair param : params) {
                 if (param.getName().equalsIgnoreCase("entities")) {
-                 entites = param.getValue();
-                };
+                    entites = param.getValue();
+                }
+                ;
             }
-            String nomFichier="";
+            String nomFichier = "";
             if (response.getStatusCode() == HttpStatus.OK) {
-                nomFichier=pathJson+"/lims-entites-"+entites+" - "+  compteur +".json";
+                nomFichier = pathJson + "/lims-entites-" + entites + "-" + startDateParameter + "-" + endDateParameter + "-" + compteur + ".json";
                 Files.write(Paths.get(nomFichier), response.getBody());
             }
             logger.info("Fichier créé : " + nomFichier);
@@ -206,7 +226,7 @@ public class LIMSWebService {
     }
 
     public LIMSReponseBean getNextPage(LIMSReponseBean previousResponse) {
-        return getPage(previousResponse.getNextUrl(),  username, password);
+        return getPage(previousResponse.getNextUrl(), username, password);
     }
 
 }
