@@ -23,12 +23,12 @@ public class LIMSImporter {
     private LIMSWebService limsWS;
 
     public ResultatImportExport doImport(ImportApiExterne importExterne, Date dateFin) {
-        System.out.println("Début d'exécution de la méthode doImport");
+        logger.info("Début d'exécution de la méthode doImport");
         ResultatImportExport resultat = new ResultatImportExport();
         LIMSReponseBean page = limsWS.getPage(importExterne, importExterne.getLastFinishedAt(), dateFin);
 
         if (page == null || page.getAnalyses().isEmpty()) {
-            System.out.println("alarmNoData");
+            logger.info("Absence de données");
         } else {
 
             do {

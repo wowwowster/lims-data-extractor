@@ -96,6 +96,7 @@ public class LIMSWebService {
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
 
+    // pour tester l'autowiring en mode statique
     public void printUsername() {
         System.out.println(username);
     }
@@ -210,7 +211,6 @@ public class LIMSWebService {
                 if (param.getName().equalsIgnoreCase("entities")) {
                     entites = param.getValue();
                 }
-                ;
             }
             String nomFichier = "";
             if (response.getStatusCode() == HttpStatus.OK) {
