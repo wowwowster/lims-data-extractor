@@ -154,12 +154,14 @@ public class LIMSWebService {
             ResponseEntity<byte[]> response = restTemplate.exchange(
                     uriBuilder.build(),
                     HttpMethod.GET, entityBis, byte[].class);
-
+            logger.info("Appel WS : " + uriBuilder.build());
             compteur = compteur + 1;
+            String nomFichier="";
             if (response.getStatusCode() == HttpStatus.OK) {
-                Files.write(Paths.get("output/lims-entites-"+entites+" - "+  compteur +".json"), response.getBody());
+                nomFichier="output/lims-entites-"+entites+" - "+  compteur +".json";
+                Files.write(Paths.get(nomFichier), response.getBody());
             }
-
+            logger.info("Fichier créé : " + nomFichier);
             logger.debug("Fin d'exécution de la méthode getPage");
             return result.getBody();
         } catch (URISyntaxException e) {
@@ -180,7 +182,7 @@ public class LIMSWebService {
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
             HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
             ResponseEntity<LIMSReponseBean> result = restTemplate.exchange(uriBuilder.build(), HttpMethod.GET, entity, LIMSReponseBean.class);
-
+            logger.info("Appel WS : " + uriBuilder.build());
             HttpEntity<String> entityBis = new HttpEntity<String>("parameters", headers);
             ResponseEntity<byte[]> response = restTemplate.exchange(
                     uriBuilder.build(),
@@ -196,11 +198,12 @@ public class LIMSWebService {
                  entites = param.getValue();
                 };
             }
-
+            String nomFichier="";
             if (response.getStatusCode() == HttpStatus.OK) {
-                Files.write(Paths.get("output/lims-entites-"+entites+" - "+  compteur +".json"), response.getBody());
+                nomFichier="output/lims-entites-"+entites+" - "+  compteur +".json";
+                Files.write(Paths.get(nomFichier), response.getBody());
             }
-
+            logger.info("Fichier créé : " + nomFichier);
             return result.getBody();
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
