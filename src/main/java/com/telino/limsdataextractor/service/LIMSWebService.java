@@ -127,7 +127,7 @@ public class LIMSWebService {
             startDateParameter = dateDebut == null ? "ALL" : dateFormat.format(dateDebut);
             uriBuilder.addParameter("start-date", startDateParameter);
             endDateParameter = dateFin == null ? "ALL" : dateFormat.format(dateFin);
-            uriBuilder.addParameter("end-date", dateFormat.format(dateFin));
+            uriBuilder.addParameter("end-date", endDateParameter);
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = RestTemplateUtils.addBasicAuth(new HttpHeaders(), user, password);
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
@@ -143,12 +143,14 @@ public class LIMSWebService {
             }
 
             List<String> listStartDateParameter = Lists.newArrayList(Splitter.on("-").split(startDateParameter));
-            listStartDateParameter = listStartDateParameter.subList(0,3);
+            int indexFinListStartDateParameter = listStartDateParameter.size()>3 ? 3:listStartDateParameter.size();
+            listStartDateParameter = listStartDateParameter.subList(0,indexFinListStartDateParameter);
             Lists.reverse(listStartDateParameter);
             startDateParameter= listStartDateParameter.stream().collect(Collectors.joining(""));
 
             List<String> listEndDateParameter = Lists.newArrayList(Splitter.on("-").split(endDateParameter));
-            listEndDateParameter = listEndDateParameter.subList(0,3);
+            int indexFinListEndDateParameter = listEndDateParameter.size()>3 ? 3:listEndDateParameter.size();
+            listEndDateParameter = listEndDateParameter.subList(0,indexFinListEndDateParameter );
             Lists.reverse(listEndDateParameter);
             endDateParameter= listEndDateParameter.stream().collect(Collectors.joining(""));
 

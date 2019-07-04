@@ -40,6 +40,8 @@ public class LimsDataExtractorApplication {
 	public static void main(String[] args) throws ParseException {
 		/*File logsFolder = new File("logs");
 		logsFolder.mkdir(); */
+		Date dateLastFinishedAt=null;
+		Date dateFin =null;
 		logger.info("Début extraction");
 		SpringApplication.run(LimsDataExtractorApplication.class, args);
 		String entites = "ALL";
@@ -65,8 +67,12 @@ public class LimsDataExtractorApplication {
 		importWsExterne.setTypeImportExterne("LIMS");
 		importWsExterne.addOrUpdateParametre(new ParametreApiExterne(entites));
 		DateFormat df = new SimpleDateFormat("yyyy/MM/dd hh:mm:ss.SSS");
-		Date dateLastFinishedAt = df.parse(limsWsForTest.getJourDeBut()+" 00:00:00.000");
-		Date dateFin = df.parse(limsWsForTest.getJourFin()+" 00:00:00.000");
+		if (!limsWsForTest.getJourDeBut().isEmpty()) {
+			dateLastFinishedAt = df.parse(limsWsForTest.getJourDeBut() + " 00:00:00.000");
+		}
+		if (!limsWsForTest.getJourFin().isEmpty()) {
+			dateFin = df.parse(limsWsForTest.getJourFin() + " 00:00:00.000");
+		}
 		importWsExterne.setLastFinishedAt(dateLastFinishedAt);
 
 		importer.doImport(importWsExterne, dateFin);
