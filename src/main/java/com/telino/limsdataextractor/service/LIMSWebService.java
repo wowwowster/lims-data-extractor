@@ -16,12 +16,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.BufferedReader;
 import java.io.File;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -129,6 +134,26 @@ public class LIMSWebService {
             endDateParameter = dateFin == null ? "ALL" : dateFormat.format(dateFin);
             uriBuilder.addParameter("end-date", endDateParameter);
             RestTemplate restTemplate = new RestTemplate();
+            restTemplate.setErrorHandler(new ResponseErrorHandler() {
+
+                @Override
+                public boolean hasError(ClientHttpResponse arg0) throws IOException {
+
+                    logger.fatal("StatusCode from remote http resource:"+arg0.getStatusCode());
+                    logger.fatal("RawStatusCode from remote http resource:"+arg0.getRawStatusCode());
+                    logger.fatal("StatusText from remote http resource:"+arg0.getStatusText());
+
+                    String body = new BufferedReader(new InputStreamReader(arg0.getBody()))
+                            .lines().collect(Collectors.joining("\n"));
+
+                    //logger.fatal("Error body from remote http resource:"+body);
+                    return false;
+                }
+
+                @Override
+                public void handleError(ClientHttpResponse arg0) throws IOException {
+                }
+            });
             HttpHeaders headers = RestTemplateUtils.addBasicAuth(new HttpHeaders(), user, password);
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
             HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
