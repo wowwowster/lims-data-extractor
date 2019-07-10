@@ -12,24 +12,29 @@ import com.telino.limsdataextractor.utils.RestTemplateUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.BufferedReader;
+import javax.net.ssl.SSLContext;
 import java.io.File;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -133,18 +138,38 @@ public class LIMSWebService {
             uriBuilder.addParameter("start-date", startDateParameter);
             endDateParameter = dateFin == null ? "ALL" : dateFormat.format(dateFin);
             uriBuilder.addParameter("end-date", endDateParameter);
-            RestTemplate restTemplate = new RestTemplate();
+
+            // gestion du certificat
+            TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+
+            SSLContext sslContext = org.apache.http.ssl.SSLContexts.custom()
+                    .loadTrustMaterial(null, acceptingTrustStrategy)
+                    .build();
+
+            SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
+
+            CloseableHttpClient httpClient = HttpClients.custom()
+                    .setSSLSocketFactory(csf)
+                    .build();
+
+            HttpComponentsClientHttpRequestFactory requestFactory =
+                    new HttpComponentsClientHttpRequestFactory();
+
+            requestFactory.setHttpClient(httpClient);
+
+            RestTemplate restTemplate = new RestTemplate(requestFactory);
+//            RestTemplate restTemplate = new RestTemplate();
             restTemplate.setErrorHandler(new ResponseErrorHandler() {
 
                 @Override
                 public boolean hasError(ClientHttpResponse arg0) throws IOException {
 
-                    logger.fatal("StatusCode from remote http resource:"+arg0.getStatusCode());
-                    logger.fatal("RawStatusCode from remote http resource:"+arg0.getRawStatusCode());
-                    logger.fatal("StatusText from remote http resource:"+arg0.getStatusText());
+                    logger.info("StatusCode from remote http resource:"+arg0.getStatusCode());
+                    logger.info("RawStatusCode from remote http resource:"+arg0.getRawStatusCode());
+                    logger.info("StatusText from remote http resource:"+arg0.getStatusText());
 
-                    String body = new BufferedReader(new InputStreamReader(arg0.getBody()))
-                            .lines().collect(Collectors.joining("\n"));
+            //        String body = new BufferedReader(new InputStreamReader(arg0.getBody()))
+            //                .lines().collect(Collectors.joining("\n"));
 
                     //logger.fatal("Error body from remote http resource:"+body);
                     return false;
@@ -178,8 +203,6 @@ public class LIMSWebService {
             listEndDateParameter = listEndDateParameter.subList(0,indexFinListEndDateParameter );
             Lists.reverse(listEndDateParameter);
             endDateParameter= listEndDateParameter.stream().collect(Collectors.joining(""));
-
-
             pathJson = "output/" + entites + "-" + startDateParameter + "-" + endDateParameter;
             outputFolder = new File(pathJson);
             if (!outputFolder.exists()) {
@@ -218,7 +241,41 @@ public class LIMSWebService {
     public LIMSReponseBean getPage(String url, String user, String password) {
         try {
             URIBuilder uriBuilder = new URIBuilder(url);
-            RestTemplate restTemplate = new RestTemplate();
+
+            // gestion du certificat
+            TrustStrategy acceptingTrustStrategy = (X509Certificate[] chain, String authType) -> true;
+            SSLContext sslContext = org.apache.http.ssl.SSLContexts.custom()
+                    .loadTrustMaterial(null, acceptingTrustStrategy)
+                    .build();
+            SSLConnectionSocketFactory csf = new SSLConnectionSocketFactory(sslContext);
+            CloseableHttpClient httpClient = HttpClients.custom()
+                    .setSSLSocketFactory(csf)
+                    .build();
+            HttpComponentsClientHttpRequestFactory requestFactory =
+                    new HttpComponentsClientHttpRequestFactory();
+            requestFactory.setHttpClient(httpClient);
+
+            RestTemplate restTemplate = new RestTemplate(requestFactory);
+            restTemplate.setErrorHandler(new ResponseErrorHandler() {
+
+                @Override
+                public boolean hasError(ClientHttpResponse arg0) throws IOException {
+
+                    logger.info("StatusCode from remote http resource:"+arg0.getStatusCode());
+                    logger.info("RawStatusCode from remote http resource:"+arg0.getRawStatusCode());
+                    logger.info("StatusText from remote http resource:"+arg0.getStatusText());
+
+                    //        String body = new BufferedReader(new InputStreamReader(arg0.getBody()))
+                    //                .lines().collect(Collectors.joining("\n"));
+
+                    //logger.fatal("Error body from remote http resource:"+body);
+                    return false;
+                }
+
+                @Override
+                public void handleError(ClientHttpResponse arg0) throws IOException {
+                }
+            });
             HttpHeaders headers = RestTemplateUtils.addBasicAuth(new HttpHeaders(), user, password);
             headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
             HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
@@ -228,8 +285,6 @@ public class LIMSWebService {
             ResponseEntity<byte[]> response = restTemplate.exchange(
                     uriBuilder.build(),
                     HttpMethod.GET, entityBis, byte[].class);
-
-
             compteur = compteur + 1;
 
             List<NameValuePair> params = URLEncodedUtils.parse(uriBuilder.build(), Charset.forName("UTF-8"));
